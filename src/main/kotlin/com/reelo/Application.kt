@@ -28,7 +28,8 @@ fun startServer() {
 }
 
 fun startWorker() {
-    embeddedServer(Netty, port = 8081) {
+    val port = System.getenv("PORT")?.toIntOrNull() ?: 8081
+    embeddedServer(Netty, port = port) {
         install(Koin) {
             slf4jLogger()
             modules(appModule)
