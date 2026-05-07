@@ -11,8 +11,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 object DatabaseFactory {
 
     fun init(config: ApplicationConfig) {
-        val rawUrl = config.property("database.url").getString()
-        val jdbcUrl = if (rawUrl.startsWith("jdbc:")) rawUrl else "jdbc:$rawUrl"
+        val jdbcUrl = config.property("database.url").getString()
         val hikari = hikariDataSource(jdbcUrl)
         Database.connect(hikari)
         createSchemas()
