@@ -5,6 +5,7 @@ import com.reelo.di.appModule
 import com.reelo.plugins.*
 import com.reelo.worker.JobProcessor
 import io.ktor.server.application.*
+import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import org.koin.ktor.ext.inject
@@ -29,14 +30,32 @@ fun startServer() {
 
 fun startWorker() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 8081
-    embeddedServer(Netty, port = port) {
+    val dbUrl = System.getenv("DATABASE_URL")
+        ?: error("DATABASE_URL not set")
+    val restUrl = System.getenv("UPSTASH_REDIS_REST_URL")
+        ?: error("UPSTASH_REDIS_REST_URL not set")
+    val restToken = System.getenv("UPSTASH_REDIS_REST_TOKEN")
+        ?: error("UPSTASH_REDIS_REST_TOKEN not set")
 
-    // In startWorker()
+    val config = MapApplicationConfig(
+        "database.url" to dbUrl,
+        "redis.restUrl" to restUrl,
+        "redis.restToken" to restToken,
+        "r2.accountId" to (System.getenv("CF_ACCOUNT_ID") ?: ""),
+        "r2.accessKeyId" to (System.getenv("R2_ACCESS_KEY_ID") ?: ""),
+        "r2.secretAccessKey" to (System.getenv("R2_SECRET_ACCESS_KEY") ?: ""),
+        "r2.bucket" to (System.getenv("R2_BUCKET") ?: ""),
+        "r2.publicUrl" to (System.getenv("R2_PUBLIC_URL") ?: ""),
+        "cloudflare.apiToken" to (System.getenv("CF_AI_API_TOKEN") ?: ""),
+        "cloudflare.accountId" to (System.getenv("CF_ACCOUNT_ID") ?: "")
+    )
+
+    embeddedServer(Netty, port = port) {
         install(Koin) {
             slf4jLogger()
-            modules(appModule(environment.config))
+            modules(appModule(config))
         }
-        DatabaseFactory.init(environment.config)
+        DatabaseFactory.init(config)
         val processor by inject<JobProcessor>()
         processor.start()
     }.start(wait = true)
