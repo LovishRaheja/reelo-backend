@@ -20,7 +20,7 @@ object DatabaseFactory {
     private fun hikariDataSource(jdbcUrl: String): HikariDataSource {
         val config = HikariConfig().apply {
             driverClassName  = "org.postgresql.Driver"
-            jdbcUrl          = jdbcUrl
+            this.jdbcUrl          = jdbcUrl
             maximumPoolSize  = 10
             minimumIdle      = 2
             idleTimeout      = 600_000

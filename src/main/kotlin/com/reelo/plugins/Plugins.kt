@@ -48,7 +48,7 @@ fun Application.configureStatusPages() {
             )
         }
         exception<Throwable> { call, cause ->
-            application.log.error("Unhandled exception", cause)
+            call.application.log.error("Unhandled exception", cause)
             call.respond(
                 HttpStatusCode.InternalServerError,
                 ErrorResponse(ErrorDetail("INTERNAL_ERROR", "Something went wrong"))

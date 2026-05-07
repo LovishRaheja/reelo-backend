@@ -72,12 +72,14 @@ class ClipRepository {
         )
     }
 
-    suspend fun getEpisodeForClip(clipId: String, sessionToken: String): EpisodeResponse? = dbQuery {
-        val clip = Clips.select {
-            (Clips.id eq UUID.fromString(clipId)) and (Clips.sessionToken eq sessionToken)
-        }.firstOrNull() ?: return@dbQuery null
+    suspend fun getEpisodeForClip(clipId: String, sessionToken: String): EpisodeResponse? {
+        val episodeId = dbQuery {
+            Clips.select {
+                (Clips.id eq UUID.fromString(clipId)) and (Clips.sessionToken eq sessionToken)
+            }.firstOrNull()?.get(Clips.episodeId)?.toString()
+        } ?: return null
 
-        getEpisode(clip[Clips.episodeId].toString(), sessionToken)
+        return getEpisode(episodeId, sessionToken)
     }
 
     suspend fun getEpisodeByJobId(jobId: String): EpisodeResponse? = dbQuery {
