@@ -34,7 +34,9 @@ class RedisQueue(config: ApplicationConfig) {
 
         return try {
             val json = Json.parseToJsonElement(response)
-            json.jsonObject["result"]?.jsonPrimitive?.content
+            val result = json.jsonObject["result"]
+            if (result == null || result is kotlinx.serialization.json.JsonNull) null
+            else result.jsonPrimitive.content
         } catch (e: Exception) {
             null
         }
