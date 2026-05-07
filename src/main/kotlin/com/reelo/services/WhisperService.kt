@@ -8,7 +8,6 @@ import io.ktor.client.request.forms.*
 import io.ktor.http.*
 import io.ktor.server.config.*
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import java.io.File
 
 class WhisperService(
@@ -19,10 +18,6 @@ class WhisperService(
     private val accountId = config.property("cloudflare.accountId").getString()
     private val endpoint  = "https://api.cloudflare.com/client/v4/accounts/$accountId/ai/run/@cf/openai/whisper"
 
-    /**
-     * Transcribes an audio file and returns word-level timestamps.
-     * For files > 25MB, call transcribeLong() which chunks the audio first.
-     */
     suspend fun transcribe(audioFile: File): TranscriptResult {
         val response: WhisperResponse = httpClient.post(endpoint) {
             header("Authorization", "Bearer $apiToken")
@@ -36,9 +31,12 @@ class WhisperService(
             ))
         }.body()
 
+        val result = response.result
+            ?: throw IllegalStateException("Whisper returned no result. success=${response.success}")
+
         return TranscriptResult(
-            text  = response.result.text,
-            words = response.result.words?.map {
+            text  = result.text,
+            words = result.words?.map {
                 CaptionWord(
                     word    = it.word,
                     startMs = (it.start * 1000).toInt(),
@@ -48,12 +46,8 @@ class WhisperService(
         )
     }
 
-    /**
-     * For long podcast audio files — splits into 10-min chunks,
-     * transcribes each, stitches results with correct time offsets.
-     */
     suspend fun transcribeLong(audioFile: File, ffmpegService: FfmpegService): TranscriptResult {
-        val chunks = ffmpegService.splitAudio(audioFile, chunkMinutes = 10)
+        val chunks = ffmpegService.splitAudio(audioFile, chunkMinutes = 5)
         var timeOffsetMs = 0
         val allWords = mutableListOf<CaptionWord>()
         val fullText = StringBuilder()
@@ -83,10 +77,11 @@ data class TranscriptResult(
     val words: List<CaptionWord>
 )
 
-// ── Cloudflare response shapes ────────────────────────────────────────────────
-
 @Serializable
-private data class WhisperResponse(val result: WhisperResult)
+private data class WhisperResponse(
+    val result: WhisperResult? = null,
+    val success: Boolean = false
+)
 
 @Serializable
 private data class WhisperResult(

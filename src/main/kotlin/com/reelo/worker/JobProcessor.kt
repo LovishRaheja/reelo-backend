@@ -66,7 +66,7 @@ class JobProcessor(
             audioFile = ffmpegService.extractAudio(videoFile)
 
             // ── Step 3: Whisper transcription ─────────────────────────────────
-            val transcript = if (audioFile.length() > 20 * 1024 * 1024) {
+            val transcript = if (audioFile.length() > 9 * 1024 * 1024) {
                 log.info("Long audio — chunking for Whisper")
                 whisperService.transcribeLong(audioFile, ffmpegService)
             } else {
