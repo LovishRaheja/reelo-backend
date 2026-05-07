@@ -1,37 +1,42 @@
 package com.reelo.worker
 
-import io.github.crackthecodeabhi.kreds.connection.Endpoint
-import io.github.crackthecodeabhi.kreds.connection.newClient
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.request.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.config.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 class RedisQueue(config: ApplicationConfig) {
 
-    private val redisUrl = config.property("redis.url").getString()
-    private val queueKey = "reelo:jobs:queued"
+    private val restUrl   = config.property("redis.restUrl").getString()
+    private val restToken = config.property("redis.restToken").getString()
+    private val queueKey  = "reelo:jobs:queued"
 
-    private fun parseEndpoint(): Endpoint {
-        val uri = java.net.URI(redisUrl)
-        return Endpoint(uri.host, uri.port.takeIf { it > 0 } ?: 6379)
-    }
-
-    private fun parsePassword(): String? {
-        val uri = java.net.URI(redisUrl)
-        return uri.userInfo?.substringAfter(":")
+    private val client = HttpClient(CIO) {
+        install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
     }
 
     suspend fun push(jobId: String) {
-        val password = parsePassword()
-        newClient(parseEndpoint()).use { client ->
-            if (password != null) client.auth(password)
-            client.rpush(queueKey, jobId)
+        client.post("$restUrl/rpush/$queueKey/$jobId") {
+            header("Authorization", "Bearer $restToken")
         }
     }
 
     suspend fun pop(): String? {
-        val password = parsePassword()
-        return newClient(parseEndpoint()).use { client ->
-            if (password != null) client.auth(password)
-            client.lpop(queueKey)
+        val response = client.post("$restUrl/lpop/$queueKey") {
+            header("Authorization", "Bearer $restToken")
+        }.body<String>()
+
+        return try {
+            val json = Json.parseToJsonElement(response)
+            json.jsonObject["result"]?.jsonPrimitive?.content
+        } catch (e: Exception) {
+            null
         }
     }
 }
