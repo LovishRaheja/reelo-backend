@@ -30,9 +30,11 @@ fun startServer() {
 fun startWorker() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 8081
     embeddedServer(Netty, port = port) {
+
+    // In startWorker()
         install(Koin) {
             slf4jLogger()
-            modules(appModule)
+            modules(appModule(environment.config))
         }
         DatabaseFactory.init(environment.config)
         val processor by inject<JobProcessor>()
@@ -41,10 +43,10 @@ fun startWorker() {
 }
 
 fun Application.module() {
-    // DI
+    // In Application.module()
     install(Koin) {
         slf4jLogger()
-        modules(appModule)
+        modules(appModule(environment.config))
     }
 
     // Database

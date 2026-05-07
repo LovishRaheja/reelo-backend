@@ -15,9 +15,10 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import org.koin.dsl.module
 
-val appModule = module {
+fun appModule(config: io.ktor.server.config.ApplicationConfig) = module {
 
-    // HTTP client — used by WhisperService to call Cloudflare AI
+    single { config }
+
     single {
         HttpClient(CIO) {
             install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
@@ -25,17 +26,14 @@ val appModule = module {
         }
     }
 
-    // Services
     single { R2Service(get()) }
     single { WhisperService(get(), get()) }
     single { FfmpegService() }
     single { RedisQueue(get()) }
 
-    // Repositories
     single { JobRepository() }
     single { ClipRepository() }
 
-    // Worker
     single {
         JobProcessor(
             jobRepo        = get(),
