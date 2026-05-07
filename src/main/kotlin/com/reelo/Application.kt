@@ -23,7 +23,7 @@ fun main(args: Array<String>) {
 }
 
 fun startServer() {
-    embeddedServer(Netty, port = 8080, module = Application::module)
+    embeddedServer(Netty, commandLineEnvironment(emptyArray()))
         .start(wait = true)
 }
 
