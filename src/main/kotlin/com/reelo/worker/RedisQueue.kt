@@ -10,25 +10,27 @@ class RedisQueue(config: ApplicationConfig) {
     private val queueKey = "reelo:jobs:queued"
 
     private fun parseEndpoint(): Endpoint {
-        // Parse redis://default:password@host:port
         val uri = java.net.URI(redisUrl)
         return Endpoint(uri.host, uri.port.takeIf { it > 0 } ?: 6379)
     }
 
-    /** Push a job ID onto the queue. Called by the API after creating a job. */
+    private fun parsePassword(): String? {
+        val uri = java.net.URI(redisUrl)
+        return uri.userInfo?.substringAfter(":")
+    }
+
     suspend fun push(jobId: String) {
+        val password = parsePassword()
         newClient(parseEndpoint()).use { client ->
+            if (password != null) client.auth(password)
             client.rpush(queueKey, jobId)
         }
     }
 
-    /**
-     * Pop the next job ID from the queue.
-     * Returns null if the queue is empty.
-     * The worker calls this in a loop.
-     */
     suspend fun pop(): String? {
+        val password = parsePassword()
         return newClient(parseEndpoint()).use { client ->
+            if (password != null) client.auth(password)
             client.lpop(queueKey)
         }
     }
