@@ -7,6 +7,7 @@ import aws.sdk.kotlin.services.s3.model.PutObjectRequest
 import aws.sdk.kotlin.services.s3.presigners.presignPutObject
 import aws.smithy.kotlin.runtime.auth.awscredentials.Credentials
 import aws.smithy.kotlin.runtime.content.ByteStream
+import aws.smithy.kotlin.runtime.content.fromFile
 import aws.smithy.kotlin.runtime.content.toByteArray
 import aws.smithy.kotlin.runtime.net.url.Url
 import io.ktor.server.config.*
@@ -47,7 +48,7 @@ class R2Service(config: ApplicationConfig) {
             s3.putObject(PutObjectRequest {
                 bucket = this@R2Service.bucket
                 key    = fileKey
-                body   = ByteStream.fromBytes(localFile.readBytes())
+                body   = ByteStream.fromFile(localFile)
                 this.contentType = contentType
             })
         }
@@ -60,8 +61,10 @@ class R2Service(config: ApplicationConfig) {
                 bucket = this@R2Service.bucket
                 key    = fileKey
             }) { response ->
-                val bytes = response.body?.toByteArray()
-                if (bytes != null) destination.writeBytes(bytes)
+                response.body?.let { byteStream ->
+                    val bytes = byteStream.toByteArray()
+                    destination.writeBytes(bytes)
+                }
             }
         }
     }
