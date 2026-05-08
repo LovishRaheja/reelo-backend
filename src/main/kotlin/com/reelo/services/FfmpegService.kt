@@ -81,9 +81,11 @@ class FfmpegService {
         clipDurationSec: Double = 12.0,
         minGapSec: Double = 20.0
     ): List<ClipWindow> {
+        val skipSec = minOf(30.0, totalDurationSec * 0.1)  // skip 10% or 30s, whichever is smaller
+
         val filtered = energyMap
-            .filter { it.timestampSec > 30 }
-            .filter { it.timestampSec < totalDurationSec - 30 }
+            .filter { it.timestampSec > skipSec }
+            .filter { it.timestampSec < totalDurationSec - skipSec }
             .sortedByDescending { it.energyDb }
 
         val selected = mutableListOf<EnergySegment>()
