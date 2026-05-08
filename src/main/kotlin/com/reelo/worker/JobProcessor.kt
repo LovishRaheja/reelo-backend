@@ -85,6 +85,12 @@ class JobProcessor(
             )
             log.info("Selected ${clipWindows.size} clip windows for job $jobId")
 
+            if (clipWindows.isEmpty()) {
+                jobRepo.updateStatus(jobId, "failed", errorCode = "NO_CLIPS_FOUND")
+                log.warn("No clip windows selected for job $jobId — audio too short or silent")
+                return
+            }
+
             // ── Step 5: Create episode record ─────────────────────────────────
             val episodeId = clipRepo.createEpisode(
                 jobId            = jobId,

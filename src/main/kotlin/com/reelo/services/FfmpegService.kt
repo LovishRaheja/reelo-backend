@@ -78,7 +78,7 @@ class FfmpegService {
         totalDurationSec: Double,
         clipCount: Int = 6,
         clipDurationSec: Double = 12.0,
-        minGapSec: Double = 60.0
+        minGapSec: Double = 20.0
     ): List<ClipWindow> {
         val filtered = energyMap
             .filter { it.timestampSec > 30 }
@@ -147,7 +147,7 @@ class FfmpegService {
      * Splits a long audio file into chunks for Whisper
      * (Cloudflare Whisper has a 25MB file size limit).
      */
-    suspend fun splitAudio(audioFile: File, chunkMinutes: Int = 10): List<File> =
+    suspend fun splitAudio(audioFile: File, chunkMinutes: Int = 2): List<File> =
         withContext(Dispatchers.IO) {
             val chunkSeconds = chunkMinutes * 60
             val outputDir = createTempDir("reelo_chunks_")
@@ -157,7 +157,9 @@ class FfmpegService {
                 "-i", audioFile.absolutePath,
                 "-f", "segment",
                 "-segment_time", chunkSeconds.toString(),
-                "-c", "copy",
+                "-ar", "16000",
+                "-ac", "1",
+                "-acodec", "pcm_s16le",
                 "-y", outputPattern
             )
 
