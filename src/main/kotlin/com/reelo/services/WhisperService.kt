@@ -24,8 +24,8 @@ class WhisperService(
             setBody(MultiPartFormDataContent(
                 formData {
                     append("audio", audioFile.readBytes(), Headers.build {
-                        append(HttpHeaders.ContentType, "audio/wav")
-                        append(HttpHeaders.ContentDisposition, "filename=\"audio.wav\"")
+                        append(HttpHeaders.ContentType, "audio/mpeg")
+                        append(HttpHeaders.ContentDisposition, "filename=\"audio.mp3\"")
                     })
                 }
             ))

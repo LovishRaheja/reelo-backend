@@ -13,12 +13,13 @@ class FfmpegService {
      * This is what Whisper expects.
      */
     suspend fun extractAudio(videoFile: File): File = withContext(Dispatchers.IO) {
-        val audioFile = File.createTempFile("reelo_audio_", ".wav")
+        val audioFile = File.createTempFile("reelo_audio_", ".mp3")
         runFfmpeg(
             "-i", videoFile.absolutePath,
-            "-vn",                  // no video
-            "-ac", "1",            // mono
-            "-ar", "16000",        // 16kHz sample rate
+            "-vn",
+            "-ac", "1",
+            "-ar", "16000",
+            "-b:a", "32k",
             "-y", audioFile.absolutePath
         )
         audioFile
@@ -151,19 +152,19 @@ class FfmpegService {
         withContext(Dispatchers.IO) {
             val chunkSeconds = chunkMinutes * 60
             val outputDir = createTempDir("reelo_chunks_")
-            val outputPattern = File(outputDir, "chunk_%03d.wav").absolutePath
+            val outputPattern = File(outputDir, "chunk_%03d.mp3").absolutePath
 
             runFfmpeg(
                 "-i", audioFile.absolutePath,
                 "-f", "segment",
                 "-segment_time", chunkSeconds.toString(),
-                "-ar", "16000",
                 "-ac", "1",
-                "-acodec", "pcm_s16le",
+                "-ar", "16000",
+                "-b:a", "32k",
                 "-y", outputPattern
             )
 
-            outputDir.listFiles { f -> f.name.endsWith(".wav") }
+            outputDir.listFiles { f -> f.name.endsWith(".mp3") }
                 ?.sortedBy { it.name }
                 ?: emptyList()
         }
