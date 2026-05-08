@@ -35,7 +35,7 @@ class WhisperService(
             ?: throw IllegalStateException("Whisper returned no result. success=${response.success}")
 
         return TranscriptResult(
-            text  = result.text,
+            text  = result.text ?: "",
             words = result.words?.map {
                 CaptionWord(
                     word    = it.word,
@@ -47,7 +47,7 @@ class WhisperService(
     }
 
     suspend fun transcribeLong(audioFile: File, ffmpegService: FfmpegService): TranscriptResult {
-        val chunks = ffmpegService.splitAudio(audioFile, chunkMinutes = 5)
+        val chunks = ffmpegService.splitAudio(audioFile, chunkMinutes = 2)
         var timeOffsetMs = 0
         val allWords = mutableListOf<CaptionWord>()
         val fullText = StringBuilder()
@@ -85,7 +85,7 @@ private data class WhisperResponse(
 
 @Serializable
 private data class WhisperResult(
-    val text: String,
+    val text: String? = null,
     val words: List<WhisperWord>? = null
 )
 
