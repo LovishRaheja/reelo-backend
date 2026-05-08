@@ -19,16 +19,11 @@ class WhisperService(
     private val endpoint  = "https://api.cloudflare.com/client/v4/accounts/$accountId/ai/run/@cf/openai/whisper"
 
     suspend fun transcribe(audioFile: File): TranscriptResult {
+        val bytes = audioFile.readBytes()
         val response: WhisperResponse = httpClient.post(endpoint) {
             header("Authorization", "Bearer $apiToken")
-            setBody(MultiPartFormDataContent(
-                formData {
-                    append("audio", audioFile.readBytes(), Headers.build {
-                        append(HttpHeaders.ContentType, "audio/wav")
-                        append(HttpHeaders.ContentDisposition, "filename=\"audio.wav\"")
-                    })
-                }
-            ))
+            header("Content-Type", "audio/mp3")
+            setBody(bytes)
         }.body()
 
         val result = response.result
