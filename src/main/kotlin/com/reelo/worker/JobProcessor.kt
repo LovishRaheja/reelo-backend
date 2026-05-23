@@ -23,12 +23,15 @@ class JobProcessor(
     /** Main loop — runs forever, picks jobs from Redis one by one. */
     fun start() = kotlinx.coroutines.runBlocking {
         log.info("Worker started, watching Redis queue...")
+        var backoffMs = 2_000L
         while (true) {
             val jobId = redisQueue.pop()
             if (jobId == null) {
-                delay(2_000)
+                delay(backoffMs)
+                backoffMs = minOf(backoffMs * 2, 30_000)
                 continue
             }
+            backoffMs = 2_000L
             supervisorScope {
                 launch {
                     try {
