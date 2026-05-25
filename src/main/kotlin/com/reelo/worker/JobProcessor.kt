@@ -21,24 +21,39 @@ class JobProcessor(
     private val log = LoggerFactory.getLogger(JobProcessor::class.java)
 
     /** Main loop — runs forever, picks jobs from Redis one by one. */
-    fun start() = kotlinx.coroutines.runBlocking {
-        log.info("Worker started, watching Redis queue...")
-        var backoffMs = 2_000L
-        while (true) {
-            val jobId = redisQueue.pop()
-            if (jobId == null) {
-                delay(backoffMs)
-                backoffMs = minOf(backoffMs * 2, 30_000)
-                continue
-            }
-            backoffMs = 2_000L
-            supervisorScope {
-                launch {
+    fun start() {
+        val scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default)
+        val activeJobs = java.util.concurrent.atomic.AtomicInteger(0)
+        val maxConcurrent = 4
+
+        kotlinx.coroutines.runBlocking {
+            log.info("Worker started, watching Redis queue...")
+            var backoffMs = 2_000L
+
+            while (true) {
+                if (activeJobs.get() >= maxConcurrent) {
+                    delay(2_000)
+                    continue
+                }
+
+                val jobId = redisQueue.pop()
+                if (jobId == null) {
+                    delay(backoffMs)
+                    backoffMs = minOf(backoffMs * 2, 30_000)
+                    continue
+                }
+
+                backoffMs = 2_000L
+                activeJobs.incrementAndGet()
+
+                scope.launch {
                     try {
                         processJob(jobId)
                     } catch (e: Exception) {
                         log.error("Job $jobId failed: ${e.message}", e)
                         jobRepo.updateStatus(jobId, "failed", errorCode = "PROCESSING_FAILED")
+                    } finally {
+                        activeJobs.decrementAndGet()
                     }
                 }
             }
