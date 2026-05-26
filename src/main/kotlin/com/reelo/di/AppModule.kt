@@ -3,6 +3,7 @@ package com.reelo.di
 import com.reelo.db.repositories.ClipRepository
 import com.reelo.db.repositories.JobRepository
 import com.reelo.services.FfmpegService
+import com.reelo.services.LlmService
 import com.reelo.services.R2Service
 import com.reelo.services.WhisperService
 import com.reelo.worker.JobProcessor
@@ -36,6 +37,7 @@ fun appModule(config: io.ktor.server.config.ApplicationConfig) = module {
     single { WhisperService(get(), get()) }
     single { FfmpegService() }
     single { RedisQueue(get()) }
+    single { LlmService(get(), get()) }
 
     single { JobRepository() }
     single { ClipRepository() }
@@ -47,7 +49,8 @@ fun appModule(config: io.ktor.server.config.ApplicationConfig) = module {
             r2Service      = get(),
             whisperService = get(),
             ffmpegService  = get(),
-            redisQueue     = get()
+            redisQueue     = get(),
+            llmService     = get()
         )
     }
 }

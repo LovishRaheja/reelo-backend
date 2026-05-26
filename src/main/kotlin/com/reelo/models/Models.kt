@@ -60,12 +60,13 @@ data class ClipResponse(
     val clipNumber: Int,
     val clipUrl: String,
     val thumbnailUrl: String?,
-    val title: String?,           // auto-generated from transcript
-    val transcript: String?,      // full text of the clip — copy as caption
+    val title: String?,
+    val transcript: String?,
     val energyScore: Double,
     val durationMs: Int,
-    val emotion: String? = null,  // null in v1, filled in v2
-    val emotionScore: Double? = null
+    val emotion: String? = null,
+    val emotionScore: Double? = null,
+    val platform: String? = null
 )
 
 // ── Captions ──────────────────────────────────────────────────────────────────
