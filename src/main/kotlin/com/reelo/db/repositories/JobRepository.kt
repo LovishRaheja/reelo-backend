@@ -3,6 +3,9 @@ package com.reelo.db.repositories
 import com.reelo.db.dbQuery
 import com.reelo.db.tables.Jobs
 import com.reelo.models.JobResponse
+import com.reelo.services.VideoMetadata
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import java.time.Instant
@@ -14,10 +17,14 @@ data class JobRecord(
     val fileKey: String,
     val originalFilename: String,
     val clipCount: Int,
-    val status: String
+    val status: String,
+    val extraContext: String? = null,
+    val transcript: String? = null
 )
 
 class JobRepository {
+
+    private val json = Json { ignoreUnknownKeys = true }
 
     suspend fun create(
         sessionToken: String,
@@ -58,7 +65,9 @@ class JobRepository {
                     fileKey          = it[Jobs.fileKey],
                     originalFilename = it[Jobs.originalFilename],
                     clipCount        = it[Jobs.clipCount],
-                    status           = it[Jobs.status]
+                    status           = it[Jobs.status],
+                    extraContext     = it[Jobs.extraContext],
+                    transcript       = it[Jobs.transcript]
                 )
             }.firstOrNull()
     }
@@ -77,6 +86,49 @@ class JobRepository {
             it[Jobs.errorCode]   = errorCode
             it[Jobs.updatedAt]   = Instant.now()
         }
+    }
+
+    suspend fun saveTranscriptAndMetadata(
+        jobId: String,
+        transcript: String,
+        metadata: VideoMetadata
+    ) = dbQuery {
+        Jobs.update({ Jobs.id eq UUID.fromString(jobId) }) {
+            it[Jobs.transcript]    = transcript
+            it[Jobs.detectedTopics]     = json.encodeToString(metadata.topics)
+            it[Jobs.detectedContentType] = metadata.contentType
+            it[Jobs.detectedTone]        = metadata.tone
+            it[Jobs.detectedAudience]    = metadata.audience
+            it[Jobs.updatedAt]           = Instant.now()
+        }
+    }
+
+    suspend fun confirmJob(
+        jobId: String,
+        extraContext: String?
+    ) = dbQuery {
+        Jobs.update({ Jobs.id eq UUID.fromString(jobId) }) {
+            it[Jobs.status]      = "confirmed"
+            it[Jobs.extraContext] = extraContext
+            it[Jobs.confirmedAt] = Instant.now()
+            it[Jobs.updatedAt]   = Instant.now()
+        }
+    }
+
+    suspend fun getTranscript(jobId: String): String? = dbQuery {
+        Jobs.select { Jobs.id eq UUID.fromString(jobId) }
+            .firstOrNull()?.get(Jobs.transcript)
+    }
+
+    suspend fun getMetadata(jobId: String): VideoMetadata = dbQuery {
+        val row = Jobs.select { Jobs.id eq UUID.fromString(jobId) }.firstOrNull()
+            ?: return@dbQuery VideoMetadata()
+        VideoMetadata(
+            topics      = row[Jobs.detectedTopics]?.let { json.decodeFromString(it) } ?: emptyList(),
+            contentType = row[Jobs.detectedContentType] ?: "other",
+            tone        = row[Jobs.detectedTone] ?: "conversational",
+            audience    = row[Jobs.detectedAudience] ?: ""
+        )
     }
 
     suspend fun getQueuedJobs(): List<String> = dbQuery {

@@ -81,10 +81,12 @@ class FfmpegService {
         totalDurationSec: Double,
         clipCount: Int = 6,
         clipDurationSec: Double = 12.0,
-        minGapSec: Double = 20.0
+        minGapSec: Double = 20.0,
+        semanticClips: List<SemanticClip> = emptyList()
     ): List<ClipWindow> {
-        val skipSec = minOf(30.0, totalDurationSec * 0.1)  // skip 10% or 30s, whichever is smaller
+        val skipSec = minOf(30.0, totalDurationSec * 0.1)
 
+        // Energy-based candidates
         val filtered = energyMap
             .filter { it.timestampSec > skipSec }
             .filter { it.timestampSec < totalDurationSec - skipSec }
@@ -98,17 +100,26 @@ class FfmpegService {
             }
         }
 
-        return selected
-            .sortedBy { it.timestampSec }   // order chronologically
+        val energyWindows = selected
+            .sortedBy { it.timestampSec }
             .mapIndexed { index, seg ->
                 val startSec = maxOf(0.0, seg.timestampSec - clipDurationSec / 2)
                 ClipWindow(
-                    clipNumber    = index + 1,
-                    startSec      = startSec,
-                    durationSec   = clipDurationSec,
-                    energyScore   = seg.energyDb
+                    clipNumber  = index + 1,
+                    startSec    = startSec,
+                    durationSec = clipDurationSec,
+                    energyScore = seg.energyDb
                 )
             }
+
+        // If no semantic clips return energy-based results
+        if (semanticClips.isEmpty()) return energyWindows
+
+        // Match semantic clips to energy windows by proximity
+        return energyWindows.mapIndexed { index, window ->
+            val matchedSemantic = semanticClips.getOrNull(index)
+            window.copy(semanticClip = matchedSemantic)
+        }
     }
 
     // ── Clip cutting ──────────────────────────────────────────────────────────
@@ -214,7 +225,8 @@ data class ClipWindow(
     val clipNumber: Int,
     val startSec: Double,
     val durationSec: Double,
-    val energyScore: Double
+    val energyScore: Double,
+    val semanticClip: SemanticClip? = null
 )
 
 class FfmpegException(message: String) : Exception(message)
