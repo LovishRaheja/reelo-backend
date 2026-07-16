@@ -15,6 +15,7 @@ object Jobs : Table("jobs") {
     val progress             = integer("progress").default(0)
     val confirmedAt          = timestamp("confirmed_at").nullable()
     val transcript           = text("transcript").nullable()
+    val transcriptWords = text("transcript_words").nullable()
     val detectedTopics       = text("detected_topics").nullable()
     val detectedContentType  = text("detected_content_type").nullable()
     val detectedTone         = text("detected_tone").nullable()

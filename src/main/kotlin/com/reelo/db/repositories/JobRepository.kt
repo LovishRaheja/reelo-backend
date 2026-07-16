@@ -2,6 +2,7 @@ package com.reelo.db.repositories
 
 import com.reelo.db.dbQuery
 import com.reelo.db.tables.Jobs
+import com.reelo.models.CaptionWord
 import com.reelo.models.JobResponse
 import com.reelo.services.VideoMetadata
 import kotlinx.serialization.encodeToString
@@ -91,15 +92,28 @@ class JobRepository {
     suspend fun saveTranscriptAndMetadata(
         jobId: String,
         transcript: String,
+        words: List<CaptionWord>,
         metadata: VideoMetadata
     ) = dbQuery {
         Jobs.update({ Jobs.id eq UUID.fromString(jobId) }) {
-            it[Jobs.transcript]    = transcript
-            it[Jobs.detectedTopics]     = json.encodeToString(metadata.topics)
+            it[Jobs.transcript]          = transcript
+            it[Jobs.transcriptWords]     = json.encodeToString(words)
+            it[Jobs.detectedTopics]      = json.encodeToString(metadata.topics)
             it[Jobs.detectedContentType] = metadata.contentType
             it[Jobs.detectedTone]        = metadata.tone
             it[Jobs.detectedAudience]    = metadata.audience
             it[Jobs.updatedAt]           = Instant.now()
+        }
+    }
+
+    suspend fun getTranscriptWords(jobId: String): List<CaptionWord> = dbQuery {
+        val row = Jobs.select { Jobs.id eq UUID.fromString(jobId) }.firstOrNull()
+            ?: return@dbQuery emptyList()
+        val wordsJson = row[Jobs.transcriptWords] ?: return@dbQuery emptyList()
+        try {
+            json.decodeFromString(wordsJson)
+        } catch (e: Exception) {
+            emptyList()
         }
     }
 
