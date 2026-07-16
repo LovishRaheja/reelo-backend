@@ -102,7 +102,7 @@ class JobProcessor(
             log.info("Detected metadata for job $jobId: ${metadata.contentType}, topics=${metadata.topics}")
 
             // ── Step 5: Save transcript + metadata, pause for confirmation ────
-            jobRepo.saveTranscriptAndMetadata(jobId, transcript.text, metadata)
+            jobRepo.saveTranscriptAndMetadata(jobId, transcript.text, transcript.words, metadata)
             jobRepo.updateStatus(jobId, "awaiting_confirmation", "Review your content details", 50)
             log.info("Job $jobId awaiting user confirmation")
 
@@ -126,6 +126,7 @@ class JobProcessor(
             val transcript = jobRepo.getTranscript(jobId)
             val metadata = jobRepo.getMetadata(jobId)
             val extraContext = job.extraContext
+            val transcriptWords = jobRepo.getTranscriptWords(jobId)
 
             // ── Step 6: Energy analysis ───────────────────────────────────────
             jobRepo.updateStatus(jobId, "analyzing", "Finding the best moments...", 60)
@@ -189,7 +190,7 @@ class JobProcessor(
                     clipNumber     = window.clipNumber,
                     clipUrl        = clipUrl,
                     title          = window.semanticClip?.reason ?: extractClipTitle(emptyList(), window.startSec, window.startSec + window.durationSec),
-                    transcript     = extractClipTranscript(emptyList(), window.startSec, window.startSec + window.durationSec),
+                    transcript     = extractClipTranscript(transcriptWords, window.startSec, window.startSec + window.durationSec),
                     energyScore    = window.energyScore,
                     durationMs     = (window.durationSec * 1000).toInt(),
                     clipStartS     = window.startSec,
