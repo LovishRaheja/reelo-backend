@@ -138,6 +138,7 @@ class JobProcessor(
                 transcript   = transcript ?: "",
                 metadata     = metadata,
                 clipCount    = job.clipCount,
+                totalDurationSec = totalDurationSec,
                 extraContext = extraContext
             )
             log.info("LLM found ${semanticClips.size} semantic moments for job $jobId")
