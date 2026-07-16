@@ -2,13 +2,13 @@ package com.reelo.db.repositories
 
 import com.reelo.db.dbQuery
 import com.reelo.db.tables.Jobs
+import com.reelo.db.tables.TranscriptWords
 import com.reelo.models.CaptionWord
 import com.reelo.models.JobResponse
 import com.reelo.services.VideoMetadata
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import java.time.Instant
 import java.util.UUID
 
@@ -89,15 +89,22 @@ class JobRepository {
         }
     }
 
+    suspend fun saveTranscriptWords(jobId: String, words: List<CaptionWord>) = dbQuery {
+        TranscriptWords.batchInsert(words) { word ->
+            this[TranscriptWords.jobId]   = UUID.fromString(jobId)
+            this[TranscriptWords.word]    = word.word
+            this[TranscriptWords.startMs] = word.startMs
+            this[TranscriptWords.endMs]   = word.endMs
+        }
+    }
+
     suspend fun saveTranscriptAndMetadata(
         jobId: String,
         transcript: String,
-        words: List<CaptionWord>,
         metadata: VideoMetadata
     ) = dbQuery {
         Jobs.update({ Jobs.id eq UUID.fromString(jobId) }) {
             it[Jobs.transcript]          = transcript
-            it[Jobs.transcriptWords]     = json.encodeToString(words)
             it[Jobs.detectedTopics]      = json.encodeToString(metadata.topics)
             it[Jobs.detectedContentType] = metadata.contentType
             it[Jobs.detectedTone]        = metadata.tone
@@ -106,15 +113,17 @@ class JobRepository {
         }
     }
 
-    suspend fun getTranscriptWords(jobId: String): List<CaptionWord> = dbQuery {
-        val row = Jobs.select { Jobs.id eq UUID.fromString(jobId) }.firstOrNull()
-            ?: return@dbQuery emptyList()
-        val wordsJson = row[Jobs.transcriptWords] ?: return@dbQuery emptyList()
-        try {
-            json.decodeFromString(wordsJson)
-        } catch (e: Exception) {
-            emptyList()
-        }
+    suspend fun getTranscriptWordsForWindow(
+        jobId: String,
+        startMs: Int,
+        endMs: Int
+    ): List<CaptionWord> = dbQuery {
+        TranscriptWords.select {
+            (TranscriptWords.jobId eq UUID.fromString(jobId)) and
+                    (TranscriptWords.startMs greaterEq startMs) and
+                    (TranscriptWords.endMs lessEq endMs)
+        }.orderBy(TranscriptWords.startMs, SortOrder.ASC)
+            .map { CaptionWord(it[TranscriptWords.word], it[TranscriptWords.startMs], it[TranscriptWords.endMs]) }
     }
 
     suspend fun confirmJob(

@@ -15,7 +15,6 @@ object Jobs : Table("jobs") {
     val progress             = integer("progress").default(0)
     val confirmedAt          = timestamp("confirmed_at").nullable()
     val transcript           = text("transcript").nullable()
-    val transcriptWords = text("transcript_words").nullable()
     val detectedTopics       = text("detected_topics").nullable()
     val detectedContentType  = text("detected_content_type").nullable()
     val detectedTone         = text("detected_tone").nullable()
@@ -69,5 +68,14 @@ object Captions : Table("captions") {
     val language  = text("language").default("en")
     val words     = text("words")   // stored as JSON string
     val createdAt = timestamp("created_at")
+    override val primaryKey = PrimaryKey(id)
+}
+
+object TranscriptWords : Table("transcript_words") {
+    val id      = uuid("id").autoGenerate()
+    val jobId   = uuid("job_id").references(Jobs.id)
+    val word    = text("word")
+    val startMs = integer("start_ms")
+    val endMs   = integer("end_ms")
     override val primaryKey = PrimaryKey(id)
 }

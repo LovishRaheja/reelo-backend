@@ -38,7 +38,8 @@ object DatabaseFactory {
                 Jobs,
                 Episodes,
                 Clips,
-                Captions
+                Captions,
+                TranscriptWords
             )
         }
     }
