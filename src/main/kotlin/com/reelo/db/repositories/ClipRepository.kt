@@ -106,7 +106,8 @@ class ClipRepository {
         originalFilename = this[Episodes.originalFilename],
         durationMs       = this[Episodes.durationMs],
         clips            = clips,
-        createdAt        = this[Episodes.createdAt].toString()
+        createdAt        = this[Episodes.createdAt].toString(),
+        reelUrl          = this[Episodes.reelUrl]
     )
 
     private fun ResultRow.toClipResponse() = ClipResponse(
@@ -122,4 +123,10 @@ class ClipRepository {
         emotionScore = this[Clips.emotionScore],
         platform     = this[Clips.platform]
     )
+
+    suspend fun saveReelUrl(episodeId: String, reelUrl: String) = dbQuery {
+        Episodes.update({ Episodes.id eq UUID.fromString(episodeId) }) {
+            it[Episodes.reelUrl] = reelUrl
+        }
+    }
 }

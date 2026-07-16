@@ -157,6 +157,34 @@ class FfmpegService {
         outputFile
     }
 
+    /**
+     * Stitches multiple clip files into one highlight reel.
+     * Uses FFmpeg concat demuxer for lossless joining.
+     */
+    suspend fun createHighlightReel(clipFiles: List<File>): File = withContext(Dispatchers.IO) {
+        val outputFile = File.createTempFile("reelo_reel_", ".mp4")
+
+        // Create a concat list file
+        val concatFile = File.createTempFile("reelo_concat_", ".txt")
+        concatFile.writeText(clipFiles.joinToString("\n") { "file '${it.absolutePath}'" })
+
+        runFfmpeg(
+            "-f", "concat",
+            "-safe", "0",
+            "-i", concatFile.absolutePath,
+            "-c:v", "libx264",
+            "-preset", "veryfast",
+            "-crf", "23",
+            "-c:a", "aac",
+            "-b:a", "128k",
+            "-movflags", "+faststart",
+            "-y", outputFile.absolutePath
+        )
+
+        concatFile.delete()
+        outputFile
+    }
+
     // ── Audio chunking for long files ─────────────────────────────────────────
 
     /**

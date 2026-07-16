@@ -38,6 +38,7 @@ object Episodes : Table("episodes") {
     val tone             = text("tone").nullable()
     val audience         = text("audience").nullable()
     val extraContext     = text("extra_context").nullable()
+    val reelUrl = text("reel_url").nullable()
     val createdAt        = timestamp("created_at")
     override val primaryKey = PrimaryKey(id)
 }

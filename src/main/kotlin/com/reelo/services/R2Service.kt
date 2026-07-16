@@ -75,4 +75,7 @@ class R2Service(config: ApplicationConfig) {
 
     fun clipFileKey(sessionToken: String, jobId: String, clipNumber: Int): String =
         "clips/$sessionToken/$jobId/clip_$clipNumber.mp4"
+
+    fun reelFileKey(sessionToken: String, jobId: String): String =
+        "reels/$sessionToken/$jobId/highlight_reel.mp4"
 }

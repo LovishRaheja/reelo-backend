@@ -201,6 +201,17 @@ class JobProcessor(
                 log.info("Clip ${window.clipNumber} uploaded: $clipUrl")
             }
 
+            // ── Step 11: Create highlight reel ───────────────────────────────────
+            if (clipFiles.size > 1) {
+                jobRepo.updateStatus(jobId, "clipping", "Creating highlight reel...", 95)
+                val reelFile = ffmpegService.createHighlightReel(clipFiles)
+                val reelKey = r2Service.reelFileKey(job.sessionToken, jobId)
+                val reelUrl = r2Service.uploadFile(reelFile, reelKey, "video/mp4")
+                clipRepo.saveReelUrl(episodeId, reelUrl)
+                reelFile.delete()
+                log.info("Highlight reel uploaded: $reelUrl")
+            }
+
             jobRepo.updateStatus(jobId, "done", "Your clips are ready!", 100)
             log.info("Job $jobId complete — ${clipWindows.size} clips")
 

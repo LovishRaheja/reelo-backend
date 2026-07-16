@@ -49,7 +49,8 @@ data class EpisodeResponse(
     val originalFilename: String,
     val durationMs: Int?,
     val clips: List<ClipResponse>,
-    val createdAt: String
+    val createdAt: String,
+    val reelUrl: String? = null
 )
 
 // ── Clip ──────────────────────────────────────────────────────────────────────
