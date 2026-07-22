@@ -37,11 +37,15 @@ fun Route.jobRoutes() {
             require(body.sessionToken.isNotBlank())     { "sessionToken is required" }
             require(body.clipCount in 1..10)            { "clipCount must be between 1 and 10" }
 
+            // Extract user_id from JWT if present
+            val userId = extractUserIdFromJwt(call)
+
             val job = jobRepo.create(
                 sessionToken     = body.sessionToken,
                 fileKey          = body.fileKey,
                 originalFilename = body.originalFilename,
-                clipCount        = body.clipCount
+                clipCount        = body.clipCount,
+                userId           = userId
             )
 
             redisQueue.push(job.id)
@@ -105,6 +109,15 @@ fun Route.jobRoutes() {
                 tone        = metadata.tone,
                 audience    = metadata.audience
             ))
+        }
+
+        get("/history") {
+            val userId = extractUserIdFromJwt(call)
+                ?: return@get call.respond(HttpStatusCode.Unauthorized,
+                    ErrorResponse(ErrorDetail("UNAUTHORIZED", "Sign in required")))
+
+            val jobs = jobRepo.getJobsByUserId(userId)
+            call.respond(HttpStatusCode.OK, jobs)
         }
     }
 }

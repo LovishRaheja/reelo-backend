@@ -4,6 +4,7 @@ import com.reelo.routes.clipRoutes
 import com.reelo.routes.confirmRoutes
 import com.reelo.routes.jobRoutes
 import com.reelo.routes.uploadRoutes
+import com.reelo.routes.userRoutes
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -19,6 +20,7 @@ fun Application.configureRouting() {
             jobRoutes()
             clipRoutes()
             confirmRoutes()
+            userRoutes()
         }
     }
 }

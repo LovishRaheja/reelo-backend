@@ -9,6 +9,7 @@ import com.reelo.services.VideoMetadata
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import java.time.Instant
 import java.util.UUID
 
@@ -20,7 +21,8 @@ data class JobRecord(
     val clipCount: Int,
     val status: String,
     val extraContext: String? = null,
-    val transcript: String? = null
+    val transcript: String? = null,
+    val userId: String? = null
 )
 
 class JobRepository {
@@ -31,7 +33,8 @@ class JobRepository {
         sessionToken: String,
         fileKey: String,
         originalFilename: String,
-        clipCount: Int
+        clipCount: Int,
+        userId: String? = null
     ): JobResponse = dbQuery {
         val id = Jobs.insert {
             it[Jobs.sessionToken]     = sessionToken
@@ -39,6 +42,7 @@ class JobRepository {
             it[Jobs.originalFilename] = originalFilename
             it[Jobs.clipCount]        = clipCount
             it[Jobs.status]           = "queued"
+            it[Jobs.userId]           = userId?.let { UUID.fromString(it) }
             it[Jobs.createdAt]        = Instant.now()
             it[Jobs.updatedAt]        = Instant.now()
         } get Jobs.id
@@ -68,7 +72,8 @@ class JobRepository {
                     clipCount        = it[Jobs.clipCount],
                     status           = it[Jobs.status],
                     extraContext     = it[Jobs.extraContext],
-                    transcript       = it[Jobs.transcript]
+                    transcript       = it[Jobs.transcript],
+                    userId           = it[Jobs.userId]?.toString()
                 )
             }.firstOrNull()
     }
@@ -131,10 +136,10 @@ class JobRepository {
         extraContext: String?
     ) = dbQuery {
         Jobs.update({ Jobs.id eq UUID.fromString(jobId) }) {
-            it[Jobs.status]      = "confirmed"
+            it[Jobs.status]       = "confirmed"
             it[Jobs.extraContext] = extraContext
-            it[Jobs.confirmedAt] = Instant.now()
-            it[Jobs.updatedAt]   = Instant.now()
+            it[Jobs.confirmedAt]  = Instant.now()
+            it[Jobs.updatedAt]    = Instant.now()
         }
     }
 
@@ -152,6 +157,21 @@ class JobRepository {
             tone        = row[Jobs.detectedTone] ?: "conversational",
             audience    = row[Jobs.detectedAudience] ?: ""
         )
+    }
+
+    suspend fun claimJobsBySession(sessionToken: String, userId: String) = dbQuery {
+        Jobs.update({
+            (Jobs.sessionToken eq sessionToken) and Jobs.userId.isNull()
+        }) {
+            it[Jobs.userId]    = UUID.fromString(userId)
+            it[Jobs.updatedAt] = Instant.now()
+        }
+    }
+
+    suspend fun getJobsByUserId(userId: String): List<JobResponse> = dbQuery {
+        Jobs.select { Jobs.userId eq UUID.fromString(userId) }
+            .orderBy(Jobs.createdAt, SortOrder.DESC)
+            .map { it.toJobResponse() }
     }
 
     suspend fun getQueuedJobs(): List<String> = dbQuery {

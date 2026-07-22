@@ -20,6 +20,7 @@ object Jobs : Table("jobs") {
     val detectedTone         = text("detected_tone").nullable()
     val detectedAudience     = text("detected_audience").nullable()
     val extraContext         = text("extra_context").nullable()
+    val userId               = uuid("user_id").nullable()
     val createdAt            = timestamp("created_at")
     val updatedAt            = timestamp("updated_at")
     override val primaryKey  = PrimaryKey(id)
@@ -32,12 +33,13 @@ object Episodes : Table("episodes") {
     val title            = text("title").nullable()
     val originalFilename = text("original_filename")
     val durationMs       = integer("duration_ms").nullable()
-    val topics           = text("topics").nullable()        // stored as JSON array string
+    val topics           = text("topics").nullable()
     val contentType      = text("content_type").nullable()
     val tone             = text("tone").nullable()
     val audience         = text("audience").nullable()
     val extraContext     = text("extra_context").nullable()
     val reelUrl = text("reel_url").nullable()
+    val userId = uuid("user_id").nullable()
     val createdAt        = timestamp("created_at")
     override val primaryKey = PrimaryKey(id)
 }
