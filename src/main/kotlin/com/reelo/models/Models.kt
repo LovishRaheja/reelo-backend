@@ -21,7 +21,8 @@ data class JobResponse(
     val progress: Int = 0,
     val estimatedSeconds: Int? = null,
     val errorCode: String? = null,
-    val episode: EpisodeResponse? = null   // populated when status = "done"
+    val clipCount: Int = 0,
+    val episode: EpisodeResponse? = null,
 )
 
 // ── Upload ────────────────────────────────────────────────────────────────────

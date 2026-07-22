@@ -187,6 +187,7 @@ class JobRepository {
         status       = this[Jobs.status],
         currentStep  = this[Jobs.currentStep],
         progress     = this[Jobs.progress],
-        errorCode    = this[Jobs.errorCode]
+        errorCode    = this[Jobs.errorCode],
+        clipCount    = this[Jobs.clipCount]
     )
 }
