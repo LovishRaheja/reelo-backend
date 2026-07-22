@@ -116,7 +116,14 @@ fun Route.jobRoutes() {
                 ?: return@get call.respond(HttpStatusCode.Unauthorized,
                     ErrorResponse(ErrorDetail("UNAUTHORIZED", "Sign in required")))
 
-            val jobs = jobRepo.getJobsByUserId(userId)
+            val jobs = jobRepo.getJobsByUserId(userId).map { job ->
+                if (job.status == "done") {
+                    val episode = clipRepo.getEpisodeByJobId(job.id)
+                    job.copy(episode = episode)
+                } else {
+                    job
+                }
+            }
             call.respond(HttpStatusCode.OK, jobs)
         }
     }
