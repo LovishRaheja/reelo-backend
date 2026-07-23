@@ -145,7 +145,7 @@ class FfmpegService {
             // Silence trimming — removes dead air at start/end
             "-af", "silenceremove=start_periods=1:start_silence=0.3:start_threshold=-40dB",
             // 720p video
-            "-vf", "scale=1280:720",
+            "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",
             "-c:v", "libx264",
             "-preset", "veryfast",
             "-crf", crf,
