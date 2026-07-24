@@ -6,8 +6,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CreateJobRequest(
-    val fileKey: String? = null,
-    val youtubeUrl: String? = null,
+    val fileKey: String,
     val originalFilename: String,
     val sessionToken: String,
     val clipCount: Int = 6

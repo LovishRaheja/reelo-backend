@@ -32,9 +32,7 @@ fun Route.jobRoutes() {
         post {
             val body = call.receive<CreateJobRequest>()
 
-            require(!body.fileKey.isNullOrBlank() || !body.youtubeUrl.isNullOrBlank()) {
-                "Either fileKey or youtubeUrl is required"
-            }
+            require(body.fileKey.isNotBlank()) { "fileKey is required" }
             require(body.originalFilename.isNotBlank()) { "originalFilename is required" }
             require(body.sessionToken.isNotBlank())     { "sessionToken is required" }
             require(body.clipCount in 1..10)            { "clipCount must be between 1 and 10" }
@@ -43,11 +41,10 @@ fun Route.jobRoutes() {
 
             val job = jobRepo.create(
                 sessionToken     = body.sessionToken,
-                fileKey          = body.fileKey ?: "",
+                fileKey          = body.fileKey,
                 originalFilename = body.originalFilename,
                 clipCount        = body.clipCount,
-                userId           = userId,
-                youtubeUrl       = body.youtubeUrl
+                userId           = userId
             )
 
             redisQueue.push(job.id)

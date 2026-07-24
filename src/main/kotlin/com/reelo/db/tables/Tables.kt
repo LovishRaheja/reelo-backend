@@ -21,7 +21,6 @@ object Jobs : Table("jobs") {
     val detectedAudience     = text("detected_audience").nullable()
     val extraContext         = text("extra_context").nullable()
     val userId               = uuid("user_id").nullable()
-    val youtubeUrl = text("youtube_url").nullable()
     val createdAt            = timestamp("created_at")
     val updatedAt            = timestamp("updated_at")
     override val primaryKey  = PrimaryKey(id)

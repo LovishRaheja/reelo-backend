@@ -16,8 +16,7 @@ class JobProcessor(
     private val whisperService: WhisperService,
     private val ffmpegService: FfmpegService,
     private val redisQueue: RedisQueue,
-    private val llmService: LlmService,
-    private val ytDlpService: YtDlpService
+    private val llmService: LlmService
 ) {
     private val log = LoggerFactory.getLogger(JobProcessor::class.java)
 
@@ -81,11 +80,7 @@ class JobProcessor(
             // ── Step 1: Download ──────────────────────────────────────────────
             jobRepo.updateStatus(jobId, "downloading", "Fetching your episode...", 10)
             videoFile = File.createTempFile("reelo_video_", ".mp4")
-            if (!job.youtubeUrl.isNullOrBlank()) {
-                ytDlpService.download(job.youtubeUrl, videoFile)
-            } else {
-                r2Service.downloadFile(job.fileKey, videoFile)
-            }
+            r2Service.downloadFile(job.fileKey, videoFile)
             log.info("Downloaded ${videoFile.length() / 1024}KB for job $jobId")
 
             // ── Step 2: Extract audio ─────────────────────────────────────────
@@ -126,11 +121,7 @@ class JobProcessor(
             // Re-download video for clipping
             jobRepo.updateStatus(jobId, "downloading", "Fetching your episode...", 55)
             videoFile = File.createTempFile("reelo_video_", ".mp4")
-            if (!job.youtubeUrl.isNullOrBlank()) {
-                ytDlpService.download(job.youtubeUrl, videoFile)
-            } else {
-                r2Service.downloadFile(job.fileKey, videoFile)
-            }
+            r2Service.downloadFile(job.fileKey, videoFile)
 
             val audioFile = ffmpegService.extractAudio(videoFile)
             val transcript = jobRepo.getTranscript(jobId)
