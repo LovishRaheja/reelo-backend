@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["jdk17", "ffmpeg"]
+nixPkgs = ["jdk17", "ffmpeg", "yt-dlp"]
 
 [phases.build]
 cmds = ["./gradlew clean buildFatJar"]
