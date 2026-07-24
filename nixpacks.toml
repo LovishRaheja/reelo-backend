@@ -1,8 +1,5 @@
 [phases.setup]
-nixPkgs = ["jdk17", "ffmpeg", "python3"]
+nixPkgs = ["jdk17", "ffmpeg", "python312", "python312Packages.yt-dlp"]
 
 [phases.build]
-cmds = [
-    "pip3 install yt-dlp",
-    "./gradlew --no-build-cache clean buildFatJar"
-]
+cmds = ["./gradlew --no-build-cache clean buildFatJar"]
