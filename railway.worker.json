@@ -5,7 +5,7 @@
     "buildCommand": "./gradlew --no-build-cache clean buildFatJar"
   },
   "deploy": {
-    "startCommand": "python3 -m pip install yt-dlp && java -jar build/libs/reelo-backend.jar worker",
+    "startCommand": "java -jar build/libs/reelo-backend.jar worker",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
   }

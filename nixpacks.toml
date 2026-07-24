@@ -2,4 +2,7 @@
 nixPkgs = ["jdk17", "ffmpeg", "python3"]
 
 [phases.build]
-cmds = ["./gradlew --no-build-cache clean buildFatJar"]
+cmds = [
+    "python3 -m pip install yt-dlp --break-system-packages",
+    "./gradlew --no-build-cache clean buildFatJar"
+]
