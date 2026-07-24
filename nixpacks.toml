@@ -3,6 +3,7 @@ nixPkgs = ["jdk17", "ffmpeg", "python3"]
 
 [phases.build]
 cmds = [
-    "python3 -m pip install yt-dlp --break-system-packages",
+    "pip install yt-dlp --target=/usr/local/lib/yt-dlp",
+    "ln -sf /usr/local/lib/yt-dlp/bin/yt-dlp /usr/local/bin/yt-dlp",
     "./gradlew --no-build-cache clean buildFatJar"
 ]
