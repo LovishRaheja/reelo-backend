@@ -6,6 +6,7 @@ import com.reelo.services.FfmpegService
 import com.reelo.services.LlmService
 import com.reelo.services.R2Service
 import com.reelo.services.WhisperService
+import com.reelo.services.YtDlpService
 import com.reelo.worker.JobProcessor
 import com.reelo.worker.RedisQueue
 import io.ktor.client.*
@@ -41,6 +42,7 @@ fun appModule(config: io.ktor.server.config.ApplicationConfig) = module {
 
     single { JobRepository() }
     single { ClipRepository() }
+    single { YtDlpService() }
 
     single {
         JobProcessor(
@@ -50,7 +52,8 @@ fun appModule(config: io.ktor.server.config.ApplicationConfig) = module {
             whisperService = get(),
             ffmpegService  = get(),
             redisQueue     = get(),
-            llmService     = get()
+            llmService     = get(),
+            ytDlpService   = get()
         )
     }
 }

@@ -22,7 +22,8 @@ data class JobRecord(
     val status: String,
     val extraContext: String? = null,
     val transcript: String? = null,
-    val userId: String? = null
+    val userId: String? = null,
+    val youtubeUrl: String? = null
 )
 
 class JobRepository {
@@ -34,7 +35,8 @@ class JobRepository {
         fileKey: String,
         originalFilename: String,
         clipCount: Int,
-        userId: String? = null
+        userId: String? = null,
+        youtubeUrl: String? = null
     ): JobResponse = dbQuery {
         val id = Jobs.insert {
             it[Jobs.sessionToken]     = sessionToken
@@ -43,6 +45,7 @@ class JobRepository {
             it[Jobs.clipCount]        = clipCount
             it[Jobs.status]           = "queued"
             it[Jobs.userId]           = userId?.let { UUID.fromString(it) }
+            it[Jobs.youtubeUrl]       = youtubeUrl
             it[Jobs.createdAt]        = Instant.now()
             it[Jobs.updatedAt]        = Instant.now()
         } get Jobs.id
@@ -73,7 +76,8 @@ class JobRepository {
                     status           = it[Jobs.status],
                     extraContext     = it[Jobs.extraContext],
                     transcript       = it[Jobs.transcript],
-                    userId           = it[Jobs.userId]?.toString()
+                    userId           = it[Jobs.userId]?.toString(),
+                    youtubeUrl       = it[Jobs.youtubeUrl]
                 )
             }.firstOrNull()
     }
