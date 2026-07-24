@@ -1,9 +1,9 @@
 [phases.setup]
-nixPkgs = ["jdk17", "ffmpeg", "python3"]
+nixPkgs = ["jdk17", "ffmpeg"]
 
 [phases.build]
 cmds = [
-    "pip install yt-dlp --target=/usr/local/lib/yt-dlp",
-    "ln -sf /usr/local/lib/yt-dlp/bin/yt-dlp /usr/local/bin/yt-dlp",
+    "curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp",
+    "chmod +x /usr/local/bin/yt-dlp",
     "./gradlew --no-build-cache clean buildFatJar"
 ]

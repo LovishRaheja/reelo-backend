@@ -12,7 +12,7 @@ class YtDlpService {
         log.info("Downloading video from URL: $url")
 
         val process = ProcessBuilder(
-            "/root/.local/bin/yt-dlp",  // full path
+            "yt-dlp",
             "--format", "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best[height<=720]",
             "--merge-output-format", "mp4",
             "--no-playlist",
